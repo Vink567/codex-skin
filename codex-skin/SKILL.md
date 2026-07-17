@@ -12,7 +12,7 @@ Create resources for Codex Skin Studio. Never place runtime, listener, installer
 1. Inspect a supplied reference image with the local image viewer. Use it directly as the background unless the user asks to transform it.
 2. When the user supplies only a visual description, use the `imagegen` skill to generate the final raster background. Prefer a desktop-oriented composition with quiet detail behind text and controls.
 3. Map a restrained palette to the requested areas: main background, header, sidebar, sidebar icons, four suggestion cards, composer and controls, project bar, and top-fade removal.
-4. Copy `assets/theme-template.json`, `assets/theme-template.css`, and all SVGs in `assets/icon-template/` into a temporary source directory. Fill every placeholder, including the `studioTheme` editor palette, and remove CSS rules outside the requested scope.
+4. Copy `assets/theme-template/theme.json`, `assets/theme-template/theme.css`, and all SVGs in `assets/theme-template/icons/` into a temporary source directory. Fill every placeholder, including the `studioTheme` editor palette, and remove CSS rules outside the requested scope.
 5. Treat the SVG bundle as required for every normal full-skin package: six navigation icons, one folder icon, plus attachment, permission, model, microphone, and send controls. If the prompt does not describe one of those icons, retain the matching default template SVG unchanged; do not omit it or ask a follow-up question.
 6. Read [references/theme-package-format.md](references/theme-package-format.md) before writing the manifest or naming the ZIP.
 7. Produce `preview.png`. Use a verified live Codex capture when available; otherwise use the final background artwork and set `previewType` to `background-artwork`.

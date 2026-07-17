@@ -16,6 +16,7 @@ const ALLOWED_RUNTIME_KEYS = new Set([
   'sidebarIconColor', 'folderIconColor', 'folderIconFill'
 ]);
 const ICON_KEYS = new Set(['newTask', 'scheduled', 'plugins', 'sites', 'pullRequests', 'chats', 'folderPaw', 'attachment', 'permission', 'model', 'microphone', 'send']);
+const SIDEBAR_ICON_KEYS = new Set(['newTask', 'scheduled', 'plugins', 'sites', 'pullRequests', 'chats', 'folderPaw']);
 const importedItems = new Map();
 let mainWindow;
 
@@ -26,8 +27,8 @@ function importRoot() {
 }
 
 function skinScriptPath() {
-  const packaged = path.join(process.resourcesPath, 'codex-skin', 'scripts', 'codex-skin.ps1');
-  const development = path.resolve(__dirname, '..', '..', 'codex-skin', 'scripts', 'codex-skin.ps1');
+  const packaged = path.join(process.resourcesPath, 'codex-skin-runtime', 'codex-skin.ps1');
+  const development = path.resolve(__dirname, '..', '..', 'codex-skin-runtime', 'codex-skin.ps1');
   return fs.existsSync(packaged) ? packaged : development;
 }
 
@@ -54,12 +55,26 @@ function studioTheme(theme = {}) {
   return { colors, enabled };
 }
 
-function buildStudioCss({ colors, enabled }) {
+function normalizeIconEnabled(iconPaths, requested) {
+  const input = requested && typeof requested === 'object' && !Array.isArray(requested) ? requested : {};
+  return Object.fromEntries(Object.keys(iconPaths || {}).filter((key) => ICON_KEYS.has(key)).map((key) => [key, input[key] !== false]));
+}
+
+function buildIconCss(colors, iconEnabled) {
+  const navigationSelectors = [...SIDEBAR_ICON_KEYS].filter((key) => key !== 'folderPaw' && iconEnabled[key])
+    .map((key) => `[data-codex-skin-icon="${key}"]`).join(',');
+  return [
+    navigationSelectors ? `${navigationSelectors}{color:${colors.navIcon}!important;}` : '',
+    iconEnabled.folderPaw ? `[data-codex-skin-icon="folderPaw"]{color:${colors.folder}!important;--codex-skin-folder-fill:${hexToRgba(colors.folder,.34)}!important;}` : '',
+  ].filter(Boolean).join('\n');
+}
+
+function buildStudioCss({ colors, enabled, iconEnabled = {} }) {
   const card = (index, color) => `section[class~="group/home-suggestions"] [class~="grid"] > :nth-child(${index}){--codex-skin-card-bg:${hexToRgba(color,.96)}!important;--codex-skin-card-hover:${hexToRgba(color,.99)}!important;--codex-skin-card-border:${color}!important;}`;
   return [
     enabled.headerSurface ? `main.main-surface header.app-header-tint{background-color:${hexToRgba(colors.header,.94)}!important;border-bottom-color:${hexToRgba(colors.headerBorder,.25)}!important;}` : '',
     enabled.sidebarSurface ? `aside.app-shell-left-panel{background-color:${colors.sidebar}!important;}` : '',
-    enabled.sidebarIcons ? `[data-codex-skin-icon]{color:${colors.navIcon}!important}[data-codex-skin-icon="folderPaw"]{color:${colors.folder}!important;--codex-skin-folder-fill:${hexToRgba(colors.folder,.34)}!important;}` : '',
+    enabled.sidebarIcons ? buildIconCss(colors, iconEnabled) : '',
     enabled.homeSuggestionCards ? [card(1, colors.card1), card(2, colors.card2), card(3, colors.card3), card(4, colors.card4)].join('\n') : '',
     enabled.composerChrome ? `[data-codex-skin-composer]{background-color:${hexToRgba(colors.composer,.94)}!important;outline-color:${hexToRgba(colors.composerBorder,.34)}!important}[data-codex-skin-composer]:focus-within{outline-color:${hexToRgba(colors.composerBorder,.68)}!important;box-shadow:0 0 0 3px ${hexToRgba(colors.composerBorder,.15)},0 12px 30px ${hexToRgba(colors.composerBorder,.18)}!important}[data-codex-skin-composer-control="add"]{background-color:${hexToRgba(colors.add,.94)}!important}[data-codex-skin-composer-control="permission"]{background-color:${hexToRgba(colors.permission,.94)}!important}[data-codex-skin-composer-control="model"]{background-color:${hexToRgba(colors.model,.94)}!important}[data-codex-skin-composer-control="mic"]{background-color:${hexToRgba(colors.mic,.94)}!important}[data-codex-skin-composer-control="send"]{background-color:${colors.send}!important;border-color:${colors.send}!important}` : '',
     enabled.projectBarChrome ? `[data-codex-skin-project-bar]{background-color:${hexToRgba(colors.projectBar,.96)}!important}[data-codex-skin-project-control]{background-color:${hexToRgba(colors.projectControl,.82)}!important}` : '',
@@ -88,28 +103,31 @@ function installThemeIcons(iconPaths, runtimeRoot) {
   return installed;
 }
 
-function writeStudioTheme(theme, item) {
+function writeStudioTheme(theme, item, requestedIconEnabled) {
   const runtimeRoot = path.join(process.env.LOCALAPPDATA || app.getPath('appData'), 'CodexSkin');
   const configPath = path.join(runtimeRoot, 'config.json');
   if (!fs.existsSync(configPath)) throw new Error('Codex Skin 运行时尚未初始化。请重试应用主题。');
   const { colors, enabled } = studioTheme(theme);
   const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-  const installedIconPaths = installThemeIcons(item?.iconPaths, runtimeRoot);
+  const iconEnabled = normalizeIconEnabled(item?.iconPaths, requestedIconEnabled);
+  const enabledIconPaths = Object.fromEntries(Object.entries(item?.iconPaths || {}).filter(([key]) => iconEnabled[key]));
+  const installedIconPaths = installThemeIcons(enabledIconPaths, runtimeRoot);
+  const sidebarIconsEnabled = enabled.sidebarIcons && [...SIDEBAR_ICON_KEYS].some((key) => iconEnabled[key]);
   const cssPath = path.join(runtimeRoot, 'assets', 'studio-theme.css');
   fs.mkdirSync(path.dirname(cssPath), { recursive: true });
   const packageCss = item?.customCssPath && fs.existsSync(item.customCssPath)
     ? fs.readFileSync(item.customCssPath, 'utf8')
     : '';
-  fs.writeFileSync(cssPath, `${packageCss}\n${buildStudioCss({ colors, enabled })}`.trim(), 'utf8');
+  fs.writeFileSync(cssPath, `${packageCss}\n${buildStudioCss({ colors, enabled, iconEnabled })}`.trim(), 'utf8');
   if (item?.runtimeConfig) Object.assign(config, item.runtimeConfig);
   Object.assign(config, {
     overlayColor: hexToRgba(colors.overlay, 1).match(/\d+/g).slice(0, 3).join(', '), baseColor: colors.overlay,
     headerSurface: enabled.headerSurface, headerBackground: hexToRgba(colors.header, .94), headerBorder: hexToRgba(colors.headerBorder, .25),
-    sidebarSurface: enabled.sidebarSurface, sidebarBackground: colors.sidebar, sidebarIcons: enabled.sidebarIcons,
+    sidebarSurface: enabled.sidebarSurface, sidebarBackground: colors.sidebar, sidebarIcons: sidebarIconsEnabled,
     sidebarIconColor: colors.navIcon, folderIconColor: colors.folder, folderIconFill: hexToRgba(colors.folder, .34),
     homeSuggestionCards: enabled.homeSuggestionCards, composerChrome: enabled.composerChrome, projectBarChrome: enabled.projectBarChrome,
     removeTopFade: enabled.removeTopFade, customCssPath: cssPath,
-    iconPaths: installedIconPaths,
+    iconPaths: installedIconPaths, iconEnabled,
     themeId: item?.themeId || null,
     themeName: item?.name || 'Studio Custom Theme',
     themeVersion: item?.version || null,
@@ -340,6 +358,7 @@ function createWindow() {
     height: 960,
     minWidth: 1120,
     minHeight: 740,
+    icon: path.join(__dirname, '..', 'build', 'app-icon.ico'),
     backgroundColor: '#10131c',
     titleBarStyle: 'hidden',
     titleBarOverlay: { color: '#10131c', symbolColor: '#e7e9ef', height: 38 },
@@ -377,13 +396,13 @@ app.whenReady().then(() => {
     return importFile(filePaths[0]);
   });
 
-  ipcMain.handle('skin:apply', async (_event, { itemId, overlay, fit, theme }) => {
+  ipcMain.handle('skin:apply', async (_event, { itemId, overlay, fit, theme, iconEnabled }) => {
     const item = importedItems.get(itemId);
     if (!item || !fs.existsSync(item.path)) throw new Error('请先导入并选择一个主题资源。');
     const scriptExists = fs.existsSync(skinScriptPath());
     if (!scriptExists) throw new Error('未找到 Codex Skin 换肤脚本。');
     const result = await runPowerShell('change', [item.path, '-Overlay', String(overlay), '-Fit', fit, '-Position', item.position]);
-    writeStudioTheme(theme, item);
+    writeStudioTheme(theme, item, iconEnabled);
     return { result, themeName: item.name, fullTheme: item.kind === 'theme' };
   });
 

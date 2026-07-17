@@ -67,7 +67,7 @@ $script:IconFiles = [ordered]@{
     microphone = 'microphone.svg'
     send = 'send.svg'
 }
-$script:DefaultIconRoot = Join-Path (Split-Path -Parent $PSScriptRoot) 'assets\icon-template'
+$script:DefaultIconRoot = Join-Path (Split-Path -Parent $PSScriptRoot) 'assets\theme-template\icons'
 
 function Write-Utf8NoBom {
     param(

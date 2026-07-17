@@ -1,88 +1,137 @@
-# Codex Skin
+# Codex Skin Studio 使用指南
 
-Codex Skin 是一套面向 Windows 版 Codex Desktop 的主题资源工作流。仓库里包含用于生成主题资源包的 Codex Skill、用于导入和应用主题的 Codex Skin Studio 桌面应用，以及当前最新的发布产物。
+Codex Skin Studio 是一个给 Windows 版 Codex Desktop 换主题的小工具。
 
-## 仓库内容
+请注意：Studio 只导入主题资源包，也就是 `.zip` 文件。它不能选择 `.png`、`.jpg` 这类普通图片文件。如果你手里只有一张图片，或者只有一个主题想法，需要先用 `$codex-skin` Skill 生成主题 ZIP，再回到 Studio 里导入。
 
-- `codex-skin/` - Codex Skill，用来生成 Studio 可导入的主题资源包。
-- `codex-skin-studio/` - Electron 桌面应用，用来导入、预览、应用、检查和恢复 Codex 主题。
-- `dist/codex-skin-cozy-cat-room.zip` - 当前可导入的主题资源包。
-- `dist/codex-skin-studio-theme-resource-packager-skill-v0.3.4.zip` - 当前打包好的 Skill 发布包。
-- `codex-skin-studio/dist-v18/Codex-Skin-Studio-0.1.3-portable.exe` - 最新 Studio v18 便携版 Windows 构建。
+## 最简单的使用流程
 
-## Codex Skin Studio
+1. 准备一张参考图片，或者写一句你想要的主题描述。
+2. 在 Codex 里使用 `$codex-skin` 生成主题资源包。
+3. 得到一个 `codex-skin-xxx.zip` 文件。
+4. 打开 Codex Skin Studio。
+5. 导入这个 `.zip` 主题包。
+6. 预览效果，按需微调颜色和开关。
+7. 点击“应用全部区域到 Codex”。
 
-Studio 负责运行时侧的主题管理：
+## 第一步：用 Skill 生成主题 ZIP
 
-1. 导入 `.zip` 主题资源包。
-2. 校验 manifest、SHA-256、路径安全、图片资源和 SVG 图标。
-3. 预览主题，并在编辑器里调整各区域颜色与开关。
-4. 通过本地运行时脚本把选中的主题应用到 Codex。
-5. 检查当前状态，或恢复默认外观。
+打开 Codex，新建一个任务，然后把图片发给 Codex，或者直接写你想要的主题风格。
 
-当前上传的最新 Studio 构建是 v18 便携版：
+可以这样说：
 
 ```text
-codex-skin-studio/dist-v18/Codex-Skin-Studio-0.1.3-portable.exe
+使用 $codex-skin，把这张图片做成 Codex Skin Studio 可导入的主题资源包。
+主题名叫：暖色猫咪房间。
+希望修改背景、侧边栏、输入框、按钮和首页建议卡片。
 ```
 
-旧版 Electron 构建目录已被 `.gitignore` 排除，仓库只保留最新 v18 版本，避免上传 v2-v17 的历史构建产物。
-
-## 主题资源包格式
-
-主题 ZIP 是纯资源包，不应该包含运行时脚本、安装脚本、恢复脚本、可执行文件或用户本机路径。
-
-一个完整主题资源包通常包含：
+如果你没有图片，也可以只写描述：
 
 ```text
-theme.json
-SHA256SUMS.txt
-preview.png
-assets/background.<png|jpg|jpeg|webp|gif>
-assets/theme.css
-assets/icons/*.svg
+使用 $codex-skin，生成一个 Codex Skin Studio 可导入的主题资源包。
+风格：清爽的浅色森林书桌，背景不要太花，文字要清楚。
+主题名叫：Forest Desk。
 ```
 
-完整 manifest 约定和校验规则见 `codex-skin/references/theme-package-format.md`。
+Skill 完成后，会给你一个 `.zip` 文件路径。这个 ZIP 才是 Studio 要导入的文件。
 
-## 构建主题资源包
+## 第二步：导入到 Studio
 
-在 `codex-skin/` 目录下，可以用下面的命令生成 Studio 可导入的主题 ZIP：
+1. 打开 `Codex Skin Studio.exe`。
+2. 点击左侧的“导入主题资源包”。
+3. 选择刚才生成的 `codex-skin-xxx.zip`。
+4. 等待 Studio 检查主题包。
+5. 检查通过后，中间会显示预览。
 
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts\build-theme-pack.ps1 `
-  -ThemePath "<absolute-theme-json>" `
-  -OutputDirectory "<absolute-output-directory>" `
-  -Force
-```
+如果导入失败，通常说明这个 ZIP 不是 Studio 支持的主题包，或者主题包缺少文件。重新让 `$codex-skin` 生成一次即可。
 
-构建脚本会按下面的格式命名资源包：
+## 第三步：调整效果
+
+导入主题后，右侧可以做一些简单调整。
+
+- “背景遮罩”：背景太亮或太花时，把它调高一点。
+- “图片适配”：决定背景是铺满、完整显示，还是拉伸。
+- “表面样式”：调整顶部栏和侧边栏颜色。
+- “SVG 图标”：调整侧边栏图标颜色。
+- “建议卡片”：调整首页四张建议卡片颜色。
+- “Composer 输入组件”：调整底部输入框和按钮颜色。
+- “当前项目选择栏”：调整项目选择区域。
+- “区域开关”：不想改哪个区域，就关掉哪个区域。
+
+调整完成后，需要点击“应用全部区域到 Codex”，效果才会真正应用。
+
+## 第四步：应用到 Codex
+
+点击“应用全部区域到 Codex”后，Studio 会把主题应用到 Codex。
+
+如果 Codex 已经打开，通常会直接看到变化。  
+如果没有变化，先关闭 Codex，再重新打开 Codex，然后回到 Studio 检查状态。
+
+## 恢复默认外观
+
+如果你不想继续使用当前主题：
+
+1. 打开 Codex Skin Studio。
+2. 点击“检查当前状态”。
+3. 点击恢复按钮。
+
+恢复只会停止当前主题效果，不会删除你的主题 ZIP。
+
+## 常见问题
+
+### Studio 能导入图片吗？
+
+不能。Studio 只导入 `.zip` 主题资源包。普通图片需要先交给 `$codex-skin` Skill，生成 ZIP 后再导入。
+
+### 主题 ZIP 是什么？
+
+它是一个打包好的主题文件，里面包含背景图、预览图、样式和图标。你不用手动打开它，直接在 Studio 里选择这个 ZIP 即可。
+
+### `$codex-skin` 生成的 ZIP 在哪里？
+
+Codex 完成任务时会告诉你资源包路径。一般文件名类似：
 
 ```text
-codex-skin-<theme-slug>.zip
+codex-skin-forest-desk.zip
 ```
 
-## 从源码运行 Studio
+把这个 ZIP 导入 Studio 就行。
 
-```powershell
-cd codex-skin-studio
-npm install
-npm start
+### 应用后 Codex 没变化怎么办？
+
+先关闭 Codex，再重新打开。  
+如果还是没有变化，回到 Studio 里点击“检查当前状态”。
+
+### 背景太花，文字看不清怎么办？
+
+在 Studio 里把“背景遮罩”调高一点。也可以让 `$codex-skin` 重新生成一个更干净、更适合阅读的背景。
+
+### 可以随时换主题吗？
+
+可以。重新导入一个新的主题 ZIP，然后再次点击“应用全部区域到 Codex”。
+
+### 可以删除 dist、artifacts 这些文件夹吗？
+
+可以。它们通常只是本地构建产物或临时素材，不影响 Studio 正常使用。真正使用软件时，只需要 Studio 程序和要导入的主题 ZIP。
+
+## 给 Skill 的提示词模板
+
+你可以直接复制下面这段发给 Codex：
+
+```text
+使用 $codex-skin，帮我生成一个 Codex Skin Studio 可导入的主题资源包。
+主题名：
+风格：
+参考图片：
+希望修改的区域：背景、顶部栏、侧边栏、侧边栏图标、首页建议卡片、输入框、项目选择栏。
+要求：背景不要影响文字阅读，整体颜色柔和，最后给我可导入 Studio 的 ZIP 文件路径。
 ```
 
-## 构建 Studio
+## 注意事项
 
-```powershell
-cd codex-skin-studio
-npm install
-npm run dist
-```
-
-Studio 使用 `electron-builder` 打包，并会把 Codex Skin 的运行时脚本与资源作为 extra resources 放入应用。
-
-## 安全边界
-
-- 不修改 Codex MSIX 包或 `app.asar`。
-- 不把凭据、对话内容、绝对本机路径或浏览器数据放进主题包。
-- SVG 图标只能是静态安全标记，不能包含脚本、事件处理器、外部 URL、data URL、frame 或 embedded object。
-- Studio 会在应用主题前校验导入的资源包。
+- 这个工具面向 Windows 版 Codex Desktop。
+- Studio 导入的是 ZIP，不是普通图片。
+- 不建议把私人照片、聊天截图或包含敏感信息的图片做成主题。
+- 如果 Windows 弹出安全提醒，请确认软件来源可信后再运行。
+- 遇到问题时，优先尝试关闭 Codex 后重新打开。

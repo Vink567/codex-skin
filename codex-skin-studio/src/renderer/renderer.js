@@ -5,7 +5,7 @@ const defaults = {
   projectControl: '#fffaf1', headerSurface: true, sidebarSurface: true, sidebarIcons: true, homeSuggestionCards: true,
   composerChrome: true, projectBarChrome: true, removeTopFade: true,
 };
-const state = { items: [], selected: null, overlay: .3, fit: 'cover', theme: { ...defaults } };
+const state = { items: [], selected: null, overlay: .3, fit: 'cover', theme: { ...defaults }, iconEnabled: {} };
 const $ = (selector) => document.querySelector(selector);
 
 function toast(message, error = false) {
@@ -18,14 +18,34 @@ function toast(message, error = false) {
 }
 
 function bytes(value) { return value > 1048576 ? `${(value / 1048576).toFixed(1)} MB` : `${Math.max(1, Math.round(value / 1024))} KB`; }
-const iconFallbacks = { newTask: '✎', scheduled: '◷', plugins: '⌘', sites: '▦', pullRequests: '⑂', chats: '◌' };
+const ICON_GROUPS = [
+  { id: 'navigation', label: '导航图标', keys: ['newTask', 'scheduled', 'plugins', 'sites', 'pullRequests', 'chats'] },
+  { id: 'project', label: '项目图标', keys: ['folderPaw'] },
+  { id: 'composer', label: 'Composer 图标', keys: ['attachment', 'permission', 'model', 'microphone', 'send'] },
+];
+const ICON_LABELS = {
+  newTask: '新建任务', scheduled: '已安排', plugins: '插件', sites: '站点', pullRequests: '拉取请求', chats: '聊天',
+  folderPaw: '项目文件夹', attachment: '附件', permission: '权限', model: '模型', microphone: '麦克风', send: '发送',
+};
+const iconFallbacks = {
+  newTask: '✎', scheduled: '◷', plugins: '⌘', sites: '▦', pullRequests: '⑂', chats: '◌',
+  attachment: '＋', permission: '◉', model: '', send: '↑',
+};
 function fallbackFolderSvg() {
   return `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path class="folder-body" d="M3.2 5.6h6.1l2 2.2h9.2c1.3 0 2.3 1 2.3 2.3v7.4c0 1.3-1 2.3-2.3 2.3H3.2c-1.3 0-2.3-1-2.3-2.3V7.9c0-1.3 1-2.3 2.3-2.3Z"/><g class="folder-paw"><circle cx="15" cy="11.1" r="1.1"/><circle cx="17.7" cy="10.2" r="1.1"/><circle cx="20.1" cy="11.6" r="1.1"/><path d="M15.1 15.7c0-1.9 1.5-3.2 2.5-3.2s2.5 1.3 2.5 3.2c0 1.2-.9 2-2.5 2s-2.5-.8-2.5-2Z"/></g></svg>`;
 }
-function fallbackIcon(key) { return key === 'folderPaw' ? fallbackFolderSvg() : (iconFallbacks[key] || ''); }
-function packageIconMarkup(key) { return state.selected?.iconSvgs?.[key] || fallbackIcon(key); }
+function fallbackIcon(key) {
+  if (key === 'folderPaw') return fallbackFolderSvg();
+  if (key === 'microphone') return micIcon();
+  return iconFallbacks[key] || '';
+}
+function hasPackageIcon(key) { return Boolean(state.selected?.iconSvgs?.[key]); }
+function isPackageIconEnabled(key) { return hasPackageIcon(key) && state.iconEnabled[key] !== false; }
+function resourceIconMarkup(key) { return state.selected?.iconSvgs?.[key] || fallbackIcon(key); }
+function packageIconMarkup(key) { return isPackageIconEnabled(key) ? resourceIconMarkup(key) : fallbackIcon(key); }
 function navIcon(key) { return `<span class="preview-nav-icon" data-package-icon="${key}">${packageIconMarkup(key)}</span>`; }
 function folderIcon(className = '') { return `<span class="preview-folder ${className}" data-package-icon="folderPaw">${packageIconMarkup('folderPaw')}</span>`; }
+function composerIcon(key) { return `<span class="preview-composer-icon" data-package-icon="${key}">${packageIconMarkup(key)}</span>`; }
 function micIcon() {
   return `<svg class="preview-mic-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="8.2" y="3" width="7.6" height="11.4" rx="3.8"/><path d="M5.2 11.8a6.8 6.8 0 0 0 13.6 0M12 18.6V21M8.4 21h7.2"/></svg>`;
 }
@@ -76,12 +96,12 @@ function installDomPreview() {
           <div class="preview-composer" data-preview-module="composer">
             <span class="preview-placeholder">随心输入</span>
             <div class="preview-composer-actions">
-              <button class="composer-add" data-preview-module="add-button">＋</button>
-              <button class="composer-permission" data-preview-module="permission-button">◉ 完全访问</button>
+              <button class="composer-add" data-preview-module="add-button" aria-label="附件">${composerIcon('attachment')}</button>
+              <button class="composer-permission" data-preview-module="permission-button">${composerIcon('permission')}<span>完全访问</span></button>
               <span class="composer-spacer"></span>
-              <button class="composer-model" data-preview-module="model-button">5.6 Terra　高⌄</button>
-              <button class="composer-mic" data-preview-module="mic-button" aria-label="麦克风">${micIcon()}</button>
-              <button class="composer-send" data-preview-module="send-button">↑</button>
+              <button class="composer-model" data-preview-module="model-button">${composerIcon('model')}<span>5.6 Terra　高⌄</span></button>
+              <button class="composer-mic" data-preview-module="mic-button" aria-label="麦克风">${composerIcon('microphone')}</button>
+              <button class="composer-send" data-preview-module="send-button" aria-label="发送">${composerIcon('send')}</button>
             </div>
           </div>
         </main>
@@ -100,7 +120,7 @@ function installDomPreview() {
     .preview-home{position:absolute;z-index:2;left:110px;top:267px;width:710px;text-align:center}.preview-home-mark{display:grid;width:42px;height:42px;margin:0 auto 18px;place-items:center;color:#a8aaae;font-size:34px}.preview-home h1{margin:0 0 31px;font-size:29px;line-height:34px;font-weight:445;letter-spacing:-.5px}.preview-suggestion-grid{display:grid;grid-template-columns:repeat(4,169px);gap:12px}.preview-suggestion-grid button{position:relative;display:flex;height:104px;flex-direction:column;justify-content:flex-end;padding:12px 16px;border:1px solid rgba(26,28,31,.12);border-radius:16px;color:#2d3034;font:500 14px/20px inherit;text-align:left;box-shadow:0 3px 9px rgba(0,0,0,.08)}.preview-suggestion-grid button:nth-child(1){background:var(--preview-card-1)}.preview-suggestion-grid button:nth-child(2){background:var(--preview-card-2)}.preview-suggestion-grid button:nth-child(3){background:var(--preview-card-3)}.preview-suggestion-grid button:nth-child(4){background:var(--preview-card-4)}.card-icon{position:absolute;left:16px;top:13px;font-size:17px}.blue{color:#3186ff}.purple{color:#8b55e6}.green{color:#2aad67}.orange{color:#ec6b25}
     .preview-project-bar{position:absolute;z-index:3;left:110px;top:625px;width:710px;height:61px;padding:6px 6px 27px;border-radius:20px 20px 0 0;background:var(--preview-project-bar)}.preview-project-bar button{display:flex;height:28px;align-items:center;gap:6px;padding:0 9px;border:1px solid transparent;border-radius:999px;background:var(--preview-project-control);color:#44474c;font:500 13px inherit}.preview-composer{position:absolute;z-index:4;left:97px;top:664px;width:736px;height:98px;padding:15px 13px 8px;border-radius:25px;background:color-mix(in srgb,var(--preview-composer) 94%,transparent);box-shadow:0 0 0 .5px color-mix(in srgb,var(--preview-composer-border) 34%,transparent),0 3px 7.5px rgba(0,0,0,.04),0 0 20px rgba(0,0,0,.05);backdrop-filter:blur(16px)}.preview-placeholder{color:#a3a5aa}.preview-composer-actions{position:absolute;right:10px;bottom:8px;left:10px;display:flex;height:28px;align-items:center;gap:5px}.preview-composer-actions button{height:28px;border:1px solid transparent;border-radius:999px;color:#4c4f54;font:500 12px inherit}.composer-add{width:28px;background:var(--preview-add)}.composer-permission{padding:0 8px;background:var(--preview-permission);color:#e46225!important}.composer-spacer{flex:1}.composer-model{padding:0 9px;background:var(--preview-model)}.composer-mic{width:28px;background:var(--preview-mic)}.composer-send{width:28px;background:var(--preview-send)!important;color:white!important;font-size:17px!important}
     .codex-dom-stage:not(.feature-headerSurface) [data-preview-module="header"]{background:#fff;border-color:#e6e6e6;backdrop-filter:none}.codex-dom-stage:not(.feature-sidebarSurface) [data-preview-module="sidebar"]{background:#f4f4f2}.codex-dom-stage:not(.feature-sidebarIcons) [data-preview-module="nav-icon"] .preview-nav-icon,.codex-dom-stage:not(.feature-sidebarIcons) [data-preview-module="folder-icon"] .preview-folder{color:#666a70}.codex-dom-stage:not(.feature-homeSuggestionCards) .preview-suggestion-grid button{background:#fff}.codex-dom-stage:not(.feature-composerChrome) .preview-composer{background:#fff;box-shadow:0 0 0 .5px rgba(26,28,31,.118),0 3px 7.5px rgba(0,0,0,.04),0 0 20px rgba(0,0,0,.05)}.codex-dom-stage:not(.feature-composerChrome) .preview-composer-actions button{background:transparent}.codex-dom-stage:not(.feature-projectBarChrome) .preview-project-bar{background:#f6f6f6}.codex-dom-stage:not(.feature-projectBarChrome) .preview-project-bar button{background:transparent}
-    .preview-nav-icon{height:17px;flex:0 0 17px}.preview-nav-icon>svg{display:block;width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.preview-folder>svg{display:block;width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}.preview-folder .codex-skin-folder-shape{fill:currentColor;stroke:none}.preview-folder .codex-skin-paw-fill{fill:color-mix(in srgb,var(--preview-sidebar) 90%,white);stroke:none}
+    .preview-nav-icon{height:17px;flex:0 0 17px}.preview-nav-icon>svg{display:block;width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.preview-folder>svg{display:block;width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}.preview-folder .codex-skin-folder-shape{fill:currentColor;stroke:none}.preview-folder .codex-skin-paw-fill{fill:color-mix(in srgb,var(--preview-sidebar) 90%,white);stroke:none}.preview-nav-icon:not(.using-package-icon),.preview-folder:not(.using-package-icon){color:#666a70}.composer-add,.composer-mic,.composer-send{display:grid;place-items:center}.composer-permission,.composer-model{display:inline-flex;align-items:center;gap:4px}.preview-composer-icon{display:inline-grid;width:15px;height:15px;flex:0 0 15px;place-items:center}.preview-composer-icon:empty{display:none}.preview-composer-icon>svg{display:block;width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
   `;
   document.head.appendChild(style);
   const stage = host.querySelector('.codex-dom-stage');
@@ -119,6 +139,69 @@ function syncEditorControls() {
   document.querySelectorAll('[data-fit]').forEach((button) => button.classList.toggle('selected', button.dataset.fit === state.fit));
   document.querySelectorAll('[data-theme-color]').forEach((input) => { input.value = state.theme[input.dataset.themeColor]; });
   document.querySelectorAll('[data-feature]').forEach((input) => { input.checked = state.theme[input.dataset.feature] !== false; });
+}
+
+function availableIconKeys() {
+  return Object.keys(state.selected?.iconSvgs || {}).filter((key) => Object.hasOwn(ICON_LABELS, key));
+}
+
+function defaultIconEnabled(item = state.selected) {
+  return Object.fromEntries(Object.keys(item?.iconSvgs || {}).filter((key) => Object.hasOwn(ICON_LABELS, key)).map((key) => [key, true]));
+}
+
+function iconStatus(keys) {
+  const available = keys.filter((key) => hasPackageIcon(key));
+  const active = available.filter((key) => isPackageIconEnabled(key));
+  return { available, active, all: available.length > 0 && active.length === available.length, some: active.length > 0 };
+}
+
+function syncIconControls() {
+  const allKeys = availableIconKeys();
+  const master = $('#use-package-icons');
+  if (!master) return;
+  const overall = iconStatus(allKeys);
+  master.checked = overall.all;
+  master.indeterminate = overall.some && !overall.all;
+  $('#package-icon-summary').textContent = `${overall.active.length}/${overall.available.length}`;
+  document.querySelectorAll('[data-icon-group-toggle]').forEach((input) => {
+    const status = iconStatus(ICON_GROUPS.find((group) => group.id === input.dataset.iconGroupToggle)?.keys || []);
+    input.checked = status.all;
+    input.indeterminate = status.some && !status.all;
+    const summary = document.querySelector(`[data-icon-group-summary="${input.dataset.iconGroupToggle}"]`);
+    if (summary) summary.textContent = `${status.active.length}/${status.available.length}`;
+  });
+  document.querySelectorAll('[data-icon-toggle]').forEach((input) => { input.checked = isPackageIconEnabled(input.dataset.iconToggle); });
+}
+
+function setIconEnabled(keys, enabled) {
+  const available = new Set(availableIconKeys());
+  const changed = keys.filter((key) => available.has(key));
+  changed.forEach((key) => { state.iconEnabled[key] = enabled; });
+  if (state.selected) state.selected.iconEnabled = { ...state.iconEnabled };
+  renderPackageIcons(changed);
+  syncIconControls();
+}
+
+function renderIconControls() {
+  const host = $('#icon-controls');
+  const allKeys = availableIconKeys();
+  if (!allKeys.length) {
+    host.innerHTML = '<p class="icon-controls-empty">导入带 SVG 的主题资源包后，可选择使用哪些图标。</p>';
+    return;
+  }
+  const groups = ICON_GROUPS.map((group) => ({ ...group, keys: group.keys.filter((key) => allKeys.includes(key)) })).filter((group) => group.keys.length);
+  host.innerHTML = `
+    <label class="icon-master-toggle"><input id="use-package-icons" type="checkbox"><span>使用资源包 SVG</span><small id="package-icon-summary"></small></label>
+    ${groups.map((group) => `<section class="icon-control-group"><label class="icon-group-heading"><input type="checkbox" data-icon-group-toggle="${group.id}"><b>${group.label}</b><small data-icon-group-summary="${group.id}"></small></label><div class="icon-toggle-grid">${group.keys.map((key) => `<label class="icon-toggle-item"><input type="checkbox" data-icon-toggle="${key}"><span class="icon-resource-preview">${resourceIconMarkup(key)}</span><span>${ICON_LABELS[key]}</span></label>`).join('')}</div></section>`).join('')}
+  `;
+  $('#use-package-icons').onchange = (event) => setIconEnabled(allKeys, event.target.checked);
+  document.querySelectorAll('[data-icon-group-toggle]').forEach((input) => {
+    input.onchange = (event) => setIconEnabled(ICON_GROUPS.find((group) => group.id === event.target.dataset.iconGroupToggle)?.keys || [], event.target.checked);
+  });
+  document.querySelectorAll('[data-icon-toggle]').forEach((input) => {
+    input.onchange = (event) => setIconEnabled([event.target.dataset.iconToggle], event.target.checked);
+  });
+  syncIconControls();
 }
 
 function renderAssets() {
@@ -151,9 +234,13 @@ function applyThemeToDom() {
   } else background.style.backgroundImage = '';
 }
 
-function renderPackageIcons() {
+function renderPackageIcons(keys = null) {
+  const targetKeys = keys ? new Set(keys) : null;
   document.querySelectorAll('[data-package-icon]').forEach((element) => {
-    element.innerHTML = packageIconMarkup(element.dataset.packageIcon);
+    const key = element.dataset.packageIcon;
+    if (targetKeys && !targetKeys.has(key)) return;
+    element.innerHTML = packageIconMarkup(key);
+    element.classList.toggle('using-package-icon', isPackageIconEnabled(key));
   });
 }
 
@@ -172,7 +259,9 @@ function selectItem(item) {
   state.overlay = Number.isFinite(item?.overlay) ? item.overlay : .3;
   state.fit = ['cover', 'contain', 'fill'].includes(item?.fit) ? item.fit : 'cover';
   state.theme = { ...defaults, ...(item?.studioTheme || {}) };
+  state.iconEnabled = { ...defaultIconEnabled(item), ...(item?.iconEnabled || {}) };
   renderPackageIcons();
+  renderIconControls();
   syncEditorControls();
   renderAssets();
   refresh();
@@ -202,12 +291,22 @@ $('#overlay').oninput = (event) => { state.overlay = Number(event.target.value) 
 $('#fit-control').onclick = (event) => { const button = event.target.closest('[data-fit]'); if (!button) return; state.fit = button.dataset.fit; syncEditorControls(); refresh(); };
 document.querySelectorAll('[data-theme-color]').forEach((input) => { input.oninput = (event) => { state.theme[event.target.dataset.themeColor] = event.target.value; refresh(); }; });
 document.querySelectorAll('[data-feature]').forEach((input) => { input.onchange = (event) => { state.theme[event.target.dataset.feature] = event.target.checked; refresh(); }; });
-$('#reset-button').onclick = () => { state.theme = { ...defaults, ...(state.selected?.studioTheme || {}) }; state.overlay = Number.isFinite(state.selected?.overlay) ? state.selected.overlay : .3; syncEditorControls(); refresh(); toast('已恢复资源包默认设置'); };
+$('#reset-button').onclick = () => {
+  state.theme = { ...defaults, ...(state.selected?.studioTheme || {}) };
+  state.overlay = Number.isFinite(state.selected?.overlay) ? state.selected.overlay : .3;
+  state.iconEnabled = defaultIconEnabled();
+  if (state.selected) state.selected.iconEnabled = { ...state.iconEnabled };
+  renderPackageIcons();
+  renderIconControls();
+  syncEditorControls();
+  refresh();
+  toast('已恢复资源包默认设置');
+};
 $('#apply-button').onclick = async () => {
   const button = $('#apply-button');
   button.disabled = true;
   button.textContent = '正在应用…';
-  try { const response = await window.skinStudio.apply({ itemId: state.selected.id, overlay: state.overlay, fit: state.fit, theme: state.theme }); toast(response.fullTheme ? `已应用完整主题：${response.themeName}` : '背景已应用到 Codex。'); }
+  try { const response = await window.skinStudio.apply({ itemId: state.selected.id, overlay: state.overlay, fit: state.fit, theme: state.theme, iconEnabled: state.iconEnabled }); toast(response.fullTheme ? `已应用完整主题：${response.themeName}` : '背景已应用到 Codex。'); }
   catch (error) { toast(error.message || '应用失败', true); }
   finally { button.disabled = false; button.textContent = '应用全部区域到 Codex'; }
 };
@@ -218,5 +317,6 @@ document.addEventListener('drop', (event) => { event.preventDefault(); importThe
 
 installDomPreview();
 renderAssets();
+renderIconControls();
 syncEditorControls();
 refresh();

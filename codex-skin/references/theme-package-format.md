@@ -64,7 +64,7 @@ codex-skin-<theme>/
 
 ## Manifest Contract
 
-Start from `assets/theme-template.json`. The builder adds this required block:
+Start from `assets/theme-template/theme.json`. The builder adds this required block:
 
 ```json
 {
@@ -132,7 +132,7 @@ newTask, scheduled, plugins, sites, pullRequests, chats, folderPaw,
 attachment, permission, model, microphone, send
 ```
 
-Navigation comprises `newTask`, `scheduled`, `plugins`, `sites`, `pullRequests`, and `chats`; `folderPaw` is the folder icon; the remaining five keys target the composer controls. Use the matching files from `assets/icon-template/` as a starting point, then replace a file only when the user described a distinct icon treatment. If the prompt is silent about an icon, keep its default SVG. The builder automatically supplies a default for any omitted normal-theme mapping. SVGs must start with an `<svg>` element and may not contain scripts, event attributes, external URLs, data URLs, `url(...)`, `foreignObject`, frames, or embedded objects. Studio verifies these rules and SHA-256 before importing.
+Navigation comprises `newTask`, `scheduled`, `plugins`, `sites`, `pullRequests`, and `chats`; `folderPaw` is the folder icon; the remaining five keys target the composer controls. Use the matching files from `assets/theme-template/icons/` as a starting point, then replace a file only when the user described a distinct icon treatment. If the prompt is silent about an icon, keep its default SVG. The builder automatically supplies a default for any omitted normal-theme mapping. SVGs must start with an `<svg>` element and may not contain scripts, event attributes, external URLs, data URLs, `url(...)`, `foreignObject`, frames, or embedded objects. Studio verifies these rules and SHA-256 before importing.
 
 ## Build
 
