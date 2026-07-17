@@ -2,77 +2,41 @@
 
 Codex Skin Studio 是一个给 Windows 版 Codex Desktop 换主题的小工具。
 
-它的流程很简单：
+完整流程是：
 
-1. 先安装 `$codex-skin` Skill。
+1. 让 Codex 安装 `$codex-skin` Skill。
 2. 用 `$codex-skin` 根据图片或文字描述生成主题 ZIP。
 3. 下载并打开 Codex Skin Studio。
-4. 在 Studio 里导入这个 ZIP。
+4. 在 Studio 里导入主题 ZIP。
 5. 预览、调整，然后应用到 Codex。
 
-请注意：Studio 只导入 `.zip` 主题资源包，不能直接选择 `.png`、`.jpg` 这类普通图片。
+请注意：Studio 只导入 `.zip` 主题资源包，不能直接导入 `.png`、`.jpg` 这类普通图片。
 
 ## 下载 Studio
 
-打开 GitHub 仓库的 Releases 页面：
+点击下面这个链接下载 Windows 便携版：
 
-```text
-https://github.com/Vink567/codex-skin/releases
-```
-
-在最新版 `v0.1.4` 里下载：
-
-```text
-Codex-Skin-Studio-0.1.4-portable.exe
-```
+[下载 Codex-Skin-Studio-0.1.4-portable.exe](https://github.com/Vink567/codex-skin/releases/download/v0.1.4/Codex-Skin-Studio-0.1.4-portable.exe)
 
 这是便携版，不需要安装。下载后双击运行即可。
 
-如果 Windows 弹出安全提醒，请确认文件来自这个仓库后再运行。
+如果你想查看完整发行页，可以打开：
 
-## 下载 Skill
+[Codex Skin Studio v0.1.4 Release](https://github.com/Vink567/codex-skin/releases/tag/v0.1.4)
 
-`$codex-skin` Skill 用来生成 Studio 能导入的主题 ZIP。你有两种下载方式。
+## 安装 Skill
 
-### 方法一：下载仓库 ZIP
+`$codex-skin` Skill 用来生成 Studio 能导入的主题 ZIP。你不需要手动复制文件夹，直接让 Codex 安装即可。
 
-1. 打开仓库首页：
-
-```text
-https://github.com/Vink567/codex-skin
-```
-
-2. 点击绿色的 `Code`。
-3. 点击 `Download ZIP`。
-4. 解压下载的压缩包。
-5. 找到里面的 `codex-skin` 文件夹。
-6. 把这个 `codex-skin` 文件夹复制到你的 Codex skills 目录。
-
-Windows 上通常是：
+打开 Codex，新建一个任务，把下面这句话发给 Codex：
 
 ```text
-C:\Users\你的用户名\.codex\skills\codex-skin
+请从 GitHub 安装这个 Codex skill：https://github.com/Vink567/codex-skin/tree/main/codex-skin
 ```
 
-复制完成后，重启 Codex。
+安装完成后，重启 Codex。
 
-### 方法二：用 Git 下载
-
-如果你会用 Git，可以运行：
-
-```powershell
-git clone https://github.com/Vink567/codex-skin.git
-```
-
-然后把仓库里的 `codex-skin` 文件夹复制到：
-
-```text
-C:\Users\你的用户名\.codex\skills\codex-skin
-```
-
-复制完成后，重启 Codex。
-
-## 怎么确认 Skill 可用
+## 确认 Skill 可用
 
 重启 Codex 后，新建一个任务，输入：
 
@@ -154,7 +118,7 @@ codex-skin-forest-desk.zip
 
 ## 常见问题
 
-### Studio 能导入图片吗？
+### Studio 能直接导入图片吗？
 
 不能。Studio 只导入 `.zip` 主题资源包。普通图片需要先交给 `$codex-skin` Skill，生成 ZIP 后再导入。
 
