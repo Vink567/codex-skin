@@ -2,53 +2,127 @@
 
 Codex Skin Studio 是一个给 Windows 版 Codex Desktop 换主题的小工具。
 
-请注意：Studio 只导入主题资源包，也就是 `.zip` 文件。它不能选择 `.png`、`.jpg` 这类普通图片文件。如果你手里只有一张图片，或者只有一个主题想法，需要先用 `$codex-skin` Skill 生成主题 ZIP，再回到 Studio 里导入。
+它的流程很简单：
 
-## 最简单的使用流程
+1. 先安装 `$codex-skin` Skill。
+2. 用 `$codex-skin` 根据图片或文字描述生成主题 ZIP。
+3. 下载并打开 Codex Skin Studio。
+4. 在 Studio 里导入这个 ZIP。
+5. 预览、调整，然后应用到 Codex。
 
-1. 准备一张参考图片，或者写一句你想要的主题描述。
-2. 在 Codex 里使用 `$codex-skin` 生成主题资源包。
-3. 得到一个 `codex-skin-xxx.zip` 文件。
-4. 打开 Codex Skin Studio。
-5. 导入这个 `.zip` 主题包。
-6. 预览效果，按需微调颜色和开关。
-7. 点击“应用全部区域到 Codex”。
+请注意：Studio 只导入 `.zip` 主题资源包，不能直接选择 `.png`、`.jpg` 这类普通图片。
 
-## 第一步：用 Skill 生成主题 ZIP
+## 下载 Studio
 
-打开 Codex，新建一个任务，然后把图片发给 Codex，或者直接写你想要的主题风格。
+打开 GitHub 仓库的 Releases 页面：
 
-可以这样说：
+```text
+https://github.com/Vink567/codex-skin/releases
+```
+
+在最新版 `v0.1.4` 里下载：
+
+```text
+Codex-Skin-Studio-0.1.4-portable.exe
+```
+
+这是便携版，不需要安装。下载后双击运行即可。
+
+如果 Windows 弹出安全提醒，请确认文件来自这个仓库后再运行。
+
+## 下载 Skill
+
+`$codex-skin` Skill 用来生成 Studio 能导入的主题 ZIP。你有两种下载方式。
+
+### 方法一：下载仓库 ZIP
+
+1. 打开仓库首页：
+
+```text
+https://github.com/Vink567/codex-skin
+```
+
+2. 点击绿色的 `Code`。
+3. 点击 `Download ZIP`。
+4. 解压下载的压缩包。
+5. 找到里面的 `codex-skin` 文件夹。
+6. 把这个 `codex-skin` 文件夹复制到你的 Codex skills 目录。
+
+Windows 上通常是：
+
+```text
+C:\Users\你的用户名\.codex\skills\codex-skin
+```
+
+复制完成后，重启 Codex。
+
+### 方法二：用 Git 下载
+
+如果你会用 Git，可以运行：
+
+```powershell
+git clone https://github.com/Vink567/codex-skin.git
+```
+
+然后把仓库里的 `codex-skin` 文件夹复制到：
+
+```text
+C:\Users\你的用户名\.codex\skills\codex-skin
+```
+
+复制完成后，重启 Codex。
+
+## 怎么确认 Skill 可用
+
+重启 Codex 后，新建一个任务，输入：
+
+```text
+使用 $codex-skin，生成一个测试主题资源包。
+```
+
+如果 Codex 能识别 `$codex-skin`，说明 Skill 已经装好。
+
+## 用 Skill 生成主题 ZIP
+
+如果你有参考图片，可以把图片发给 Codex，然后这样说：
 
 ```text
 使用 $codex-skin，把这张图片做成 Codex Skin Studio 可导入的主题资源包。
-主题名叫：暖色猫咪房间。
+主题名叫：暖色书桌。
 希望修改背景、侧边栏、输入框、按钮和首页建议卡片。
+要求：背景不要影响文字阅读，整体颜色柔和。
 ```
 
-如果你没有图片，也可以只写描述：
+如果你没有图片，也可以只写主题描述：
 
 ```text
 使用 $codex-skin，生成一个 Codex Skin Studio 可导入的主题资源包。
-风格：清爽的浅色森林书桌，背景不要太花，文字要清楚。
 主题名叫：Forest Desk。
+风格：清爽的浅色森林书桌，背景不要太花，文字要清楚。
+希望修改背景、顶部栏、侧边栏、侧边栏图标、首页建议卡片、输入框和项目选择栏。
 ```
 
-Skill 完成后，会给你一个 `.zip` 文件路径。这个 ZIP 才是 Studio 要导入的文件。
+完成后，Codex 会告诉你一个 `.zip` 文件路径。文件名通常类似：
 
-## 第二步：导入到 Studio
+```text
+codex-skin-forest-desk.zip
+```
 
-1. 打开 `Codex Skin Studio.exe`。
+这个 ZIP 就是 Studio 要导入的主题包。
+
+## 用 Studio 导入主题
+
+1. 打开 `Codex-Skin-Studio-0.1.4-portable.exe`。
 2. 点击左侧的“导入主题资源包”。
-3. 选择刚才生成的 `codex-skin-xxx.zip`。
+3. 选择 `$codex-skin` 生成的 `codex-skin-xxx.zip`。
 4. 等待 Studio 检查主题包。
 5. 检查通过后，中间会显示预览。
 
 如果导入失败，通常说明这个 ZIP 不是 Studio 支持的主题包，或者主题包缺少文件。重新让 `$codex-skin` 生成一次即可。
 
-## 第三步：调整效果
+## 调整主题效果
 
-导入主题后，右侧可以做一些简单调整。
+导入主题后，右侧可以做一些简单调整：
 
 - “背景遮罩”：背景太亮或太花时，把它调高一点。
 - “图片适配”：决定背景是铺满、完整显示，还是拉伸。
@@ -59,14 +133,14 @@ Skill 完成后，会给你一个 `.zip` 文件路径。这个 ZIP 才是 Studio
 - “当前项目选择栏”：调整项目选择区域。
 - “区域开关”：不想改哪个区域，就关掉哪个区域。
 
-调整完成后，需要点击“应用全部区域到 Codex”，效果才会真正应用。
+调整完成后，点击“应用全部区域到 Codex”。
 
-## 第四步：应用到 Codex
+## 应用到 Codex
 
 点击“应用全部区域到 Codex”后，Studio 会把主题应用到 Codex。
 
 如果 Codex 已经打开，通常会直接看到变化。  
-如果没有变化，先关闭 Codex，再重新打开 Codex，然后回到 Studio 检查状态。
+如果没有变化，先关闭 Codex，再重新打开 Codex，然后回到 Studio 点击“检查当前状态”。
 
 ## 恢复默认外观
 
@@ -84,19 +158,9 @@ Skill 完成后，会给你一个 `.zip` 文件路径。这个 ZIP 才是 Studio
 
 不能。Studio 只导入 `.zip` 主题资源包。普通图片需要先交给 `$codex-skin` Skill，生成 ZIP 后再导入。
 
-### 主题 ZIP 是什么？
+### Skill 生成的 ZIP 在哪里？
 
-它是一个打包好的主题文件，里面包含背景图、预览图、样式和图标。你不用手动打开它，直接在 Studio 里选择这个 ZIP 即可。
-
-### `$codex-skin` 生成的 ZIP 在哪里？
-
-Codex 完成任务时会告诉你资源包路径。一般文件名类似：
-
-```text
-codex-skin-forest-desk.zip
-```
-
-把这个 ZIP 导入 Studio 就行。
+Codex 完成任务时会告诉你资源包路径。复制这个路径，或者在文件管理器里找到它，再导入 Studio。
 
 ### 应用后 Codex 没变化怎么办？
 
@@ -110,10 +174,6 @@ codex-skin-forest-desk.zip
 ### 可以随时换主题吗？
 
 可以。重新导入一个新的主题 ZIP，然后再次点击“应用全部区域到 Codex”。
-
-### 可以删除 dist、artifacts 这些文件夹吗？
-
-可以。它们通常只是本地构建产物或临时素材，不影响 Studio 正常使用。真正使用软件时，只需要 Studio 程序和要导入的主题 ZIP。
 
 ## 给 Skill 的提示词模板
 

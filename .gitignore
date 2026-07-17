@@ -7,7 +7,4 @@ artifacts/
 
 # Build and release outputs are kept local.
 dist/
-!dist/
-dist/**
-!dist/Codex-Skin-Studio-0.1.4-portable.exe
 codex-skin-studio/dist*/
