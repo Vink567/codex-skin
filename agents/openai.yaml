@@ -1,4 +1,0 @@
-interface:
-  display_name: "Codex Skin"
-  short_description: "Install and restore Windows Codex background skins"
-  default_prompt: "Use $codex-skin to install this image as my Windows Codex background and verify the launcher."

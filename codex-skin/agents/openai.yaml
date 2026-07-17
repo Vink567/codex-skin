@@ -1,0 +1,4 @@
+interface:
+  display_name: "Codex Skin Theme Builder"
+  short_description: "Generate importable Codex Skin Studio theme resources"
+  default_prompt: "Use $codex-skin to turn this reference image or visual description into a validated Codex Skin Studio resource ZIP."

@@ -1,0 +1,40 @@
+{
+  "name": "codex-skin-studio",
+  "version": "0.1.3",
+  "description": "Import, edit, apply, and restore validated Codex theme resource packages.",
+  "main": "src/main.cjs",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win portable"
+  },
+  "dependencies": {
+    "adm-zip": "^0.5.16"
+  },
+  "devDependencies": {
+    "electron": "^36.4.0",
+    "electron-builder": "^26.0.12"
+  },
+  "build": {
+    "appId": "com.vink.codexskinstudio",
+    "productName": "Codex Skin Studio",
+    "artifactName": "Codex-Skin-Studio-${version}-portable.exe",
+    "files": [
+      "src/**/*",
+      "package.json",
+      "node_modules/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "../codex-skin/scripts",
+        "to": "codex-skin/scripts"
+      },
+      {
+        "from": "../codex-skin/assets",
+        "to": "codex-skin/assets"
+      }
+    ],
+    "win": {
+      "target": ["portable"]
+    }
+  }
+}
