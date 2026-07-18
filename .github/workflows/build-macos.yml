@@ -10,7 +10,7 @@ on:
       - 'v*'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   package:
@@ -41,3 +41,12 @@ jobs:
             codex-skin-studio/dist/Codex-Skin-Studio-*-mac-universal.zip
             codex-skin-studio/dist/SHA256SUMS-macos.txt
           if-no-files-found: error
+      - name: Publish macOS release assets
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            codex-skin-studio/dist/Codex-Skin-Studio-*-mac-universal.dmg
+            codex-skin-studio/dist/Codex-Skin-Studio-*-mac-universal.zip
+            codex-skin-studio/dist/SHA256SUMS-macos.txt
