@@ -36,5 +36,8 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: Codex-Skin-Studio-macos-universal
-          path: codex-skin-studio/dist/
+          path: |
+            codex-skin-studio/dist/Codex-Skin-Studio-*-mac-universal.dmg
+            codex-skin-studio/dist/Codex-Skin-Studio-*-mac-universal.zip
+            codex-skin-studio/dist/SHA256SUMS-macos.txt
           if-no-files-found: error
