@@ -319,4 +319,46 @@ installDomPreview();
 renderAssets();
 renderIconControls();
 syncEditorControls();
+
+const launchButton = document.createElement('button');
+launchButton.id = 'launch-button';
+launchButton.className = 'status-button';
+launchButton.type = 'button';
+launchButton.textContent = '使用当前皮肤启动 Codex';
+$('#apply-button').after(launchButton);
+launchButton.onclick = async () => {
+  launchButton.disabled = true;
+  try {
+    const response = await window.skinStudio.launch();
+    toast(response.requiresRelaunch ? response.message : (response.launched ? '已使用当前皮肤启动 Codex。' : '已连接到正在运行的 Codex。'));
+  } catch (error) {
+    const message = String(error?.message || '启动失败');
+    if (/already running without a CDP port/i.test(message)) {
+      toast('Codex 当前以普通方式运行。请先完全退出 Codex，再点击“使用当前皮肤启动 Codex”。');
+    } else {
+      toast(message, true);
+    }
+  } finally {
+    launchButton.disabled = false;
+  }
+};
+$('#status-button').onclick = async () => {
+  const response = await window.skinStudio.status();
+  const enabled = typeof response.enabled === 'boolean' ? response.enabled : /Enabled\s*:\s*True/i.test(response.result || '');
+  toast(response.error ? `状态检查失败：${response.error}` : (enabled ? 'Codex Skin 当前已启用。' : 'Codex Skin 当前未启用。'), Boolean(response.error));
+};
+$('#apply-button').onclick = async () => {
+  const button = $('#apply-button');
+  button.disabled = true;
+  button.textContent = '正在应用…';
+  try {
+    const response = await window.skinStudio.apply({ itemId: state.selected.id, overlay: state.overlay, fit: state.fit, theme: state.theme, iconEnabled: state.iconEnabled });
+    toast(response.requiresRelaunch ? response.message : (response.fullTheme ? `已应用完整主题：${response.themeName}` : '背景已应用到 Codex。'));
+  } catch (error) {
+    toast(error.message || '应用失败', true);
+  } finally {
+    button.disabled = false;
+    button.textContent = '应用全部区域到 Codex';
+  }
+};
 refresh();

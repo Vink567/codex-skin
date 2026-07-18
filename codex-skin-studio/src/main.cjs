@@ -26,7 +26,18 @@ function importRoot() {
   return root;
 }
 
-function skinScriptPath() {
+function runtimeRoot() {
+  return process.platform === 'win32'
+    ? path.join(process.env.LOCALAPPDATA || app.getPath('appData'), 'CodexSkin')
+    : path.join(app.getPath('appData'), 'CodexSkin');
+}
+
+function skinRuntimePath() {
+  if (process.platform === 'darwin') {
+    const packaged = path.join(process.resourcesPath, 'codex-skin-runtime', 'codex-skin.mjs');
+    const development = path.resolve(__dirname, '..', '..', 'codex-skin-runtime', 'codex-skin.mjs');
+    return fs.existsSync(packaged) ? packaged : development;
+  }
   const packaged = path.join(process.resourcesPath, 'codex-skin-runtime', 'codex-skin.ps1');
   const development = path.resolve(__dirname, '..', '..', 'codex-skin-runtime', 'codex-skin.ps1');
   return fs.existsSync(packaged) ? packaged : development;
@@ -104,16 +115,16 @@ function installThemeIcons(iconPaths, runtimeRoot) {
 }
 
 function writeStudioTheme(theme, item, requestedIconEnabled) {
-  const runtimeRoot = path.join(process.env.LOCALAPPDATA || app.getPath('appData'), 'CodexSkin');
-  const configPath = path.join(runtimeRoot, 'config.json');
+  const skinRoot = runtimeRoot();
+  const configPath = path.join(skinRoot, 'config.json');
   if (!fs.existsSync(configPath)) throw new Error('Codex Skin 运行时尚未初始化。请重试应用主题。');
   const { colors, enabled } = studioTheme(theme);
   const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
   const iconEnabled = normalizeIconEnabled(item?.iconPaths, requestedIconEnabled);
   const enabledIconPaths = Object.fromEntries(Object.entries(item?.iconPaths || {}).filter(([key]) => iconEnabled[key]));
-  const installedIconPaths = installThemeIcons(enabledIconPaths, runtimeRoot);
+  const installedIconPaths = installThemeIcons(enabledIconPaths, skinRoot);
   const sidebarIconsEnabled = enabled.sidebarIcons && [...SIDEBAR_ICON_KEYS].some((key) => iconEnabled[key]);
-  const cssPath = path.join(runtimeRoot, 'assets', 'studio-theme.css');
+  const cssPath = path.join(skinRoot, 'assets', 'studio-theme.css');
   fs.mkdirSync(path.dirname(cssPath), { recursive: true });
   const packageCss = item?.customCssPath && fs.existsSync(item.customCssPath)
     ? fs.readFileSync(item.customCssPath, 'utf8')
@@ -337,7 +348,7 @@ function copySingleImage(sourcePath) {
 
 function runPowerShell(command, args) {
   return new Promise((resolve, reject) => {
-    const child = spawn('powershell.exe', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', skinScriptPath(), command, ...args], {
+    const child = spawn('powershell.exe', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', skinRuntimePath(), command, ...args], {
       windowsHide: true
     });
     let stdout = '';
@@ -352,16 +363,45 @@ function runPowerShell(command, args) {
   });
 }
 
+function runMacRuntime(command, args) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(process.execPath, [skinRuntimePath(), command, ...args], {
+      env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' },
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    let stdout = '';
+    let stderr = '';
+    child.stdout.on('data', (chunk) => { stdout += chunk; });
+    child.stderr.on('data', (chunk) => { stderr += chunk; });
+    child.on('error', reject);
+    child.on('close', (code) => {
+      if (code !== 0) {
+        reject(new Error(stderr.trim() || stdout.trim() || `macOS 换肤运行时退出码 ${code}`));
+        return;
+      }
+      try { resolve(JSON.parse(stdout)); }
+      catch { reject(new Error(`macOS 换肤运行时返回了无效结果：${stdout.trim() || stderr.trim()}`)); }
+    });
+  });
+}
+
+function runSkinRuntime(command, args) {
+  if (process.platform === 'win32') return runPowerShell(command, args).then((result) => ({ result }));
+  if (process.platform === 'darwin') return runMacRuntime(command, args);
+  return Promise.reject(new Error('Codex Skin Studio 目前只支持 Windows 和 macOS。'));
+}
+
 function createWindow() {
+  const isMac = process.platform === 'darwin';
   mainWindow = new BrowserWindow({
     width: 1480,
     height: 960,
     minWidth: 1120,
     minHeight: 740,
-    icon: path.join(__dirname, '..', 'build', 'app-icon.ico'),
+    icon: path.join(__dirname, '..', 'build', isMac ? 'app-icon.icns' : 'app-icon.ico'),
     backgroundColor: '#10131c',
-    titleBarStyle: 'hidden',
-    titleBarOverlay: { color: '#10131c', symbolColor: '#e7e9ef', height: 38 },
+    titleBarStyle: isMac ? 'hiddenInset' : 'hidden',
+    ...(isMac ? {} : { titleBarOverlay: { color: '#10131c', symbolColor: '#e7e9ef', height: 38 } }),
     webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true, nodeIntegration: false }
   });
   mainWindow.loadFile(path.join(__dirname, 'renderer', 'index.html'));
@@ -399,17 +439,19 @@ app.whenReady().then(() => {
   ipcMain.handle('skin:apply', async (_event, { itemId, overlay, fit, theme, iconEnabled }) => {
     const item = importedItems.get(itemId);
     if (!item || !fs.existsSync(item.path)) throw new Error('请先导入并选择一个主题资源。');
-    const scriptExists = fs.existsSync(skinScriptPath());
+    const scriptExists = fs.existsSync(skinRuntimePath());
     if (!scriptExists) throw new Error('未找到 Codex Skin 换肤脚本。');
-    const result = await runPowerShell('change', [item.path, '-Overlay', String(overlay), '-Fit', fit, '-Position', item.position]);
+    const runtime = await runSkinRuntime('change', [item.path, '-Overlay', String(overlay), '-Fit', fit, '-Position', item.position]);
     writeStudioTheme(theme, item, iconEnabled);
-    return { result, themeName: item.name, fullTheme: item.kind === 'theme' };
+    return { ...runtime, themeName: item.name, fullTheme: item.kind === 'theme' };
   });
 
-  ipcMain.handle('skin:restore', async () => ({ result: await runPowerShell('restore', []) }));
+  ipcMain.handle('skin:launch', async () => runSkinRuntime('launch', []));
+
+  ipcMain.handle('skin:restore', async () => runSkinRuntime('restore', []));
 
   ipcMain.handle('skin:status', async () => {
-    try { return { result: await runPowerShell('status', []) }; }
+    try { return await runSkinRuntime('status', []); }
     catch (error) { return { error: error.message }; }
   });
 

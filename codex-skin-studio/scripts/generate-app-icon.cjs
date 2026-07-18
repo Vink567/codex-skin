@@ -208,6 +208,29 @@ function icoFromFrames(frames) {
   return Buffer.concat([header, directory, ...frames.map((frame) => frame.png)]);
 }
 
+function icnsFromFrames(frames) {
+  const chunkTypes = new Map([
+    [16, 'icp4'],
+    [32, 'icp5'],
+    [64, 'icp6'],
+    [128, 'ic07'],
+    [256, 'ic08'],
+    [512, 'ic09'],
+  ]);
+  const chunks = frames
+    .filter(({ size }) => chunkTypes.has(size))
+    .map(({ size, png }) => {
+      const chunk = Buffer.alloc(8);
+      chunk.write(chunkTypes.get(size), 0, 4, 'ascii');
+      chunk.writeUInt32BE(png.length + 8, 4);
+      return Buffer.concat([chunk, png]);
+    });
+  const header = Buffer.alloc(8);
+  header.write('icns', 0, 4, 'ascii');
+  header.writeUInt32BE(8 + chunks.reduce((total, chunk) => total + chunk.length, 0), 4);
+  return Buffer.concat([header, ...chunks]);
+}
+
 const buildDir = path.resolve(__dirname, '..', 'build');
 const master = renderMaster();
 const appIcon = resizeBilinear(master, MASTER_SIZE, 256);
@@ -215,8 +238,13 @@ const frames = ICON_SIZES.map((size) => {
   const pixels = size === 256 ? appIcon : resizeBilinear(master, MASTER_SIZE, size);
   return { size, png: pngFromPixels(pixels, size) };
 });
+const macFrames = [16, 32, 64, 128, 256, 512].map((size) => ({
+  size,
+  png: pngFromPixels(size === MASTER_SIZE ? master : resizeBilinear(master, MASTER_SIZE, size), size),
+}));
 
 fs.mkdirSync(buildDir, { recursive: true });
 fs.writeFileSync(path.join(buildDir, 'app-icon.png'), pngFromPixels(appIcon, 256));
 fs.writeFileSync(path.join(buildDir, 'app-icon.ico'), icoFromFrames(frames));
-process.stdout.write('Generated build/app-icon.png and build/app-icon.ico\n');
+fs.writeFileSync(path.join(buildDir, 'app-icon.icns'), icnsFromFrames(macFrames));
+process.stdout.write('Generated build/app-icon.png, build/app-icon.ico, and build/app-icon.icns\n');

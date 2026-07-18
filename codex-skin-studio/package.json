@@ -1,12 +1,14 @@
 {
   "name": "codex-skin-studio",
-  "version": "0.1.4",
+  "version": "0.1.6",
   "description": "Import, edit, apply, and restore validated Codex theme resource packages.",
   "main": "src/main.cjs",
   "scripts": {
     "generate-icon": "node scripts/generate-app-icon.cjs",
     "start": "npm run generate-icon && electron .",
-    "dist": "npm run generate-icon && electron-builder --win portable"
+    "dist": "npm run dist:win",
+    "dist:win": "npm run generate-icon && electron-builder --win portable",
+    "dist:mac": "npm run generate-icon && electron-builder --mac --universal"
   },
   "dependencies": {
     "adm-zip": "^0.5.16"
@@ -18,14 +20,14 @@
   "build": {
     "appId": "com.vink.codexskinstudio",
     "productName": "Codex Skin Studio",
-    "artifactName": "Codex-Skin-Studio-${version}-portable.exe",
     "directories": {
-      "output": "../dist",
+      "output": "dist",
       "buildResources": "build"
     },
     "files": [
       "src/**/*",
       "build/app-icon.ico",
+      "build/app-icon.icns",
       "package.json",
       "node_modules/**/*"
     ],
@@ -36,8 +38,15 @@
       }
     ],
     "win": {
+      "artifactName": "Codex-Skin-Studio-${version}-portable.exe",
       "icon": "build/app-icon.ico",
       "target": ["portable"]
+    },
+    "mac": {
+      "artifactName": "Codex-Skin-Studio-${version}-mac-universal.${ext}",
+      "icon": "build/app-icon.icns",
+      "category": "public.app-category.developer-tools",
+      "target": ["dmg", "zip"]
     }
   }
 }
