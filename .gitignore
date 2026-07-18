@@ -8,3 +8,4 @@ artifacts/
 # Build and release outputs are kept local.
 dist/
 codex-skin-studio/dist*/
+codex-skin-studio/theme-packages/

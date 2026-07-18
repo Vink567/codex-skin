@@ -1,0 +1,37 @@
+name: Build macOS Universal Studio
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    name: macOS universal (.dmg + .zip)
+    runs-on: macos-14
+    defaults:
+      run:
+        working-directory: codex-skin-studio
+    env:
+      # This produces a universally runnable unsigned build. Add a Developer ID
+      # certificate later to sign and notarize public releases.
+      CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: codex-skin-studio/package-lock.json
+      - run: npm ci
+      - run: npm run dist:mac
+      - run: shasum -a 256 dist/Codex-Skin-Studio-*-mac-universal.* > dist/SHA256SUMS-macos.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Codex-Skin-Studio-macos-universal
+          path: codex-skin-studio/dist/
+          if-no-files-found: error
